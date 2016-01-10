@@ -5,6 +5,82 @@ html, body, main {
   width: 100%;
   height: 100%
 }
+
 main {
-  background: sandybrown
+  background: sandybrown;
+  display: flex;
+  flex-flow: row wrap;
+}
+label#logo {
+  flex: 0 2em;
+  text-align: center;
+  padding: .5em 0;
+  font: 16pt serif
+}
+input#search {
+  flex: 10 auto;
+  padding: .5em .8em;
+  outline: 0;
+  font: 14pt sans-serif;
+  border: 0;
+  color: #333
+}
+div#auth {
+  flex: 1 3em
+}
+div#auth > button {
+  padding: 0;
+  background: wheat;
+  border: 2px outset antiquewhite;
+  font: 12pt sans-serif;
+  outline: none;
+  width: 100%;
+  height: calc(3em - 2px);
+}
+div#auth > button:active {
+  border: 2px inset antiquewhite
+}
+div#results {
+  flex: 1 100%;
+  height: calc(100% - 3em);
+  border-top: 2px solid transparent
+}
+#stamps, .hide {
+  display: none
+}
+
+.modal {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.6);
+}
+.modal > div {
+  background: white;
+  border: 2px dashed black;
+  border-radius: 1.5em;
+  position: absolute;
+  top: 20%;
+  left: 20%;
+  width: calc(60% - 4em);
+  height: calc(60% - 4em);
+  padding: 2em
+}
+.modal > div > * {
+  margin: 3px
+}
+.modal label {
+  display: block
+}
+.modal input[type="text"] {
+  width: calc(100% - 1em - 10px);
+  padding: .3em .5em
+}
+
+.card {
+  background: white;
+  height: 350px;
+  width: 250px
 }

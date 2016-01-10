@@ -8,8 +8,32 @@
   </head>
   <body>
     <main>
+      <label id="logo">I</label>
+      <input id="search" type="text" placeholder="&#8202;search for an image feed">
+      <div id="auth">
+        <div id="user-page"></div>
+        <button>Log in</button>
+      </div>
+      <div id="results"></div>
+      <div class="modal hide">
+        <div>
+          <label>Username</label>
+          <input type="text">
+          <button id="existing-user">Log in</button>
+          <button id="new-user">Create local account</button>
+        </div>
+      </div>
     </main>
+    <div id="stamps">
+      <div id="modal">
+        <div class="modal"></div>
+      </div>
+      <div id="card">
+        <div class="card"></div>
+      </div>
+    </div>
+    <script src="lib/webtorrent.min.js"></script>
+    <script src="lib/localforage.min.js"></script>
+    <script src="js/main.js"></script>
   </body>
-  <script src="lib/webtorrent.min.js"></script>
-  <script src="js/main.js"></script>
 </html>

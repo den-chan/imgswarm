@@ -1,4 +1,4 @@
-var cacheName = "v1.023 10-1-2016";
+var cacheName = "v1.048 10-1-2016";
 
 self.addEventListener("install", function(event) {
   event.waitUntil(
@@ -9,6 +9,7 @@ self.addEventListener("install", function(event) {
         "js/main.js",
         "lib/webtorrent.min.js",
         "lib/localforage.min.js",
+        "lib/ripemd160.js",
         "css/main.css"
       ]);
     }).then(function () { self.skipWaiting() })

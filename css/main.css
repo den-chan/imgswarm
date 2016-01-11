@@ -40,6 +40,18 @@ div#auth > button {
 div#auth > button:active {
   border: 2px inset antiquewhite
 }
+div#auth:hover > div#user-menu:not(.hide) + button {
+  display: block;
+  position: absolute;
+  top: calc(3em - 2px);
+  right: 0;
+  width: calc(4em + 15%)
+}
+div#user-menu {
+  text-align: center;
+  line-height: 2.8em;
+  color: maroon
+}
 div#results {
   flex: 1 100%;
   height: calc(100% - 3em);
@@ -49,7 +61,7 @@ div#results {
   display: none
 }
 
-.modal {
+#modal {
   position: absolute;
   top: 0;
   left: 0;
@@ -57,7 +69,7 @@ div#results {
   right: 0;
   background: rgba(0, 0, 0, 0.6);
 }
-.modal > div {
+#modal > div {
   background: white;
   border: 2px dashed black;
   border-radius: 1.5em;
@@ -68,13 +80,13 @@ div#results {
   height: calc(60% - 4em);
   padding: 2em
 }
-.modal > div > * {
+#modal > div > * {
   margin: 3px
 }
-.modal label {
+#modal label {
   display: block
 }
-.modal input[type="text"] {
+#modal input[type="text"] {
   width: calc(100% - 1em - 10px);
   padding: .3em .5em
 }

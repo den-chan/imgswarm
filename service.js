@@ -1,4 +1,7 @@
-var cacheName = "v1.082 10-1-2016";
+/**
+ * @author den-chan | https://den-chan.github.io | den-chan@tuta.io
+ */
+var cacheName = "v1.101 10-1-2016";
 
 self.addEventListener("install", function(event) {
   event.waitUntil(
@@ -6,7 +9,10 @@ self.addEventListener("install", function(event) {
       return cache.addAll([
         "/",
         "index.html",
-        "js/main.js",
+        "imagefeed.html",
+        "js/index.js",
+        "js/imagefeed.js",
+        "js/shared.js",
         "lib/webtorrent.min.js",
         "lib/localforage.min.js",
         "lib/ripemd160.js",

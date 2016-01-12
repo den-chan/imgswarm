@@ -1,3 +1,9 @@
+/**
+ * @author den-chan | https://den-chan.github.io | den-chan@tuta.io
+ *
+ * Shared style rules
+ */
+
 html, body {
   margin: 0
 }
@@ -11,6 +17,13 @@ main {
   display: flex;
   flex-flow: row wrap;
 }
+
+#stamps, .hide {
+  display: none
+}
+
+/* index.html */
+
 label#logo {
   flex: 0 2em;
   text-align: center;
@@ -57,9 +70,6 @@ div#results {
   height: calc(100% - 3em);
   border-top: 2px solid transparent
 }
-#stamps, .hide {
-  display: none
-}
 
 #modal {
   position: absolute;
@@ -95,4 +105,40 @@ div#results {
   background: white;
   height: 350px;
   width: 250px
+}
+
+/* imagefeed.html */
+
+nav {
+  background: white
+}
+div#container {
+  flex: calc(83.3% - 6.67em)
+}
+div#toggle-nav {
+  position: absolute;
+  width: 1.5em;
+  height: 1.5em;
+  background: rosybrown;
+  text-align: center;
+  cursor: pointer;
+  font: bold 14pt/1.5 serif
+}
+div#toggle-nav.plus {
+  left: calc(5em + 16.7%)
+}
+div#toggle-nav.minus {
+  left: 0
+}
+div#toggle-nav.plus:after {
+  content: "+"
+}
+div#toggle-nav.minus:after {
+  content: "\2212"
+}
+.plus + nav {
+  flex: calc(5em + 16.7%)
+}
+.minus + nav {
+  flex: 0
 }

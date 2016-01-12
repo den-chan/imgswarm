@@ -8,7 +8,7 @@
   
   context.user = undefined;
   
-  /// Utilities
+  /// Utilities ///
   
   function $ (sel, node, a) { return (a = [].slice.call( (node || document).querySelectorAll(sel) )).length > 1 ? a : a[0] }
   function addEvents (obj) {
@@ -19,18 +19,40 @@
     }
   }
   
-  /// UI
-  addEvents({})
+  /// UI ///
+  addEvents({
+    "#toggle-nav": {
+      click: function () {
+        this.classList.toggle("plus");
+        this.classList.toggle("minus")
+      }
+    }
+  })
   
-  /// Shared Context
+  /// ServiceWorker Response ///
   
-  var sharedContext = new SharedWorker("js/shared.js");
-  sharedContext.port.start();
-  sharedContext.port.onmessage = function (e) {
-    var response = e.data;
-    switch (response.messageType) {}
+  /**
+   * Adapted from https://googlechrome.github.io/samples/service-worker/post-message/
+   */
+  function sendMessage(message) {
+    return new Promise(function (resolve, reject) {
+      var messageChannel = new MessageChannel();
+      messageChannel.port1.onmessage = function (event) {
+        if (event.data.error) reject(event.data.error);
+        else resolve(event.data.value)
+      };
+      navigator.serviceWorker.controller.postMessage(message, [messageChannel.port2])
+    })
   }
 
-  /// Cache
-  if ("serviceWorker" in navigator) navigator.serviceWorker.register("service.js", { scope: "." })
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("service.js", { scope: "." })
+      .then(navigator.serviceWorker.ready)
+      .then(function () {
+        sendMessage({ messageType: "checklogin" }).then(loadUser);
+      })
+      .catch(function(error) {});
+  } else {
+    console.log("Service Workers are unavailable.") // Handle it!
+  }
 }(self.top||self);

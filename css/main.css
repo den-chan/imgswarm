@@ -5,21 +5,26 @@
  */
 
 html, body {
-  margin: 0
+  margin: 0;
+  background: sandybrown;
 }
 html, body, main {
   width: 100%;
   height: 100%
 }
 
-main {
-  background: sandybrown;
+main.rows {
   display: flex;
   flex-flow: row wrap;
 }
+main.columns {
+  display: flex;
+  flex-flow: column wrap;
+  height: auto
+}
 
 #stamps, .hide {
-  display: none
+  display: none !important
 }
 
 /* index.html */
@@ -141,4 +146,146 @@ div#toggle-nav.minus:after {
 }
 .minus + nav {
   flex: 0
+}
+
+/* actions.html */
+div#address {
+  flex: 2em 0;
+  line-height: 2em;
+  margin-left: .5em
+}
+div#address:before {
+  content: "Address: "
+}
+section {
+  flex: 1
+}
+section:nth-child(2n) {
+  background: rgba(256, 256, 256, .2)
+}
+h2 {
+  margin-left: 1em
+}
+
+div#ifs-manage {
+  background: white;
+  width: 80%;
+  margin: 0 10% 2em;
+  height: 20em;
+  display: flex;
+  flex-flow: row wrap
+}
+div#ifs-list {
+  flex: 0 100%;
+  position: relative
+}
+div#ifs-div-container,
+div#ifs-list-container{
+  width: 100%;
+  height: 100%;
+  position: absolute
+}
+div#if-actions {
+  position: absolute;
+  width: 100%;
+  text-align: right
+}
+
+.button {
+  display: inline-block;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  
+  text-align: center;
+  height: 1.5em;
+  line-height: 1.5em;
+  border-radius: .4em;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  padding: 0 .3em;
+  margin: .3em .3em .3em -.3em
+}
+.button:hover {
+  background: #ccc
+}
+.button:active {
+  background: tomato
+}
+
+div#if-directory {
+  flex: 1 30%;
+  height: 0;
+  background: seashell;
+  display: none
+}
+div#if-image-upload {
+  flex: 1 70%;
+  height: 0;
+  background: papayawhip;
+  display: none
+}
+.active > div#ifs-list {
+  height: calc(2.1em + 2px)
+}
+.active > div#if-directory {
+  display: block
+}
+.active > div#if-image-upload {
+  display: flex;
+  flex-flow: column wrap;
+  justify-content: center;
+  align-items: center;
+}
+.active > div#if-directory,
+.active > div#if-image-upload {
+  height: calc(100% - 2.1em - 2px)
+}
+.active > div#if-directory label,
+.active > div#if-image-upload label {
+  font-size: 16pt
+}
+div#if-directory > * {
+  margin: .6em;
+  cursor: pointer;
+  display: inline-block;
+  border-radius: .3em
+}
+div#if-directory > *:hover {
+  background: tomato;
+  padding: .3em;
+  margin: .3em
+}
+div#if-image-upload > :nth-last-child(n+2) {
+  text-align: center;
+  flex: 0 3em;
+  line-height: 3em;
+  width: 60%
+}
+div#if-image-upload > :nth-last-child(n+2):hover {
+  background: aqua
+}
+div#if-image-upload label {
+  cursor: pointer
+}
+div#if-image-upload.drag {
+  background: aqua !important
+}
+div#if-image-upload.drag * {
+  pointer-events: none
+}
+input#if-file-input {
+  display: none
+}
+div#if-image-preview {
+  flex: 0 100%;
+  width: 100%;
+  overflow: hidden
+}
+div#if-image-preview > img {
+  width: 100%;
+  z-index: 1
 }

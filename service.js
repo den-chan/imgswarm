@@ -1,7 +1,7 @@
 /**
  * @author den-chan | https://den-chan.github.io | den-chan@tuta.io
  */
-var cacheName = "v1.105 10-1-2016";
+var cacheName = "v1.106 10-1-2016";
 self.importScripts("../lib/localforage.min.js", "../lib/ripemd160.js");
 
 /// Life Cycle ///
@@ -46,6 +46,8 @@ self.addEventListener("activate", function(event) {
 })
 
 /// Message handling ///
+//
+// To do: load in separately to minimise bandwidth
 
 var persistentUser;
 
@@ -82,7 +84,10 @@ self.addEventListener("message", function(event) {
       return persistentUser.login().then(postBack).catch(errorBack)
 
     case "logout":
-      return persistentUser.logout().then(postBack)
+      return persistentUser.logout().then(postBack);
+      
+    case "updateImageFeeds":
+      return persistentUser.updateImageFeeds(data.value).then(postBack).catch(errorBack)
 
   }
 })
@@ -222,7 +227,8 @@ function User (auth) {
     return generate().then(function (result) {
       self.address = result;
       user = {
-        address: result
+        address: result,
+        imageFeeds: {}
       }
       return auth.initialise(user).then(function (userObject) {
 
@@ -365,6 +371,11 @@ function User (auth) {
         return new Uint8Array(result)
       })
     })
+  }
+  
+  this.updateImageFeeds = function (imageFeeds) {
+    console.log(imageFeeds);
+    return "ok"
   }
 }
 

@@ -36,7 +36,7 @@ function sendMessage(message) {
   })
 }
 
-if ("serviceWorker" in navigator) {
+if ("serviceWorker" in navigator) {  
   navigator.serviceWorker.register("service.js", { scope: "." })
     .then(navigator.serviceWorker.ready)
     .then(function () {

@@ -5,6 +5,7 @@
     <meta charset="utf-8">
     <link rel="icon" href="data:;base64,=">
     <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/fonts.css">
   </head>
   <body>
     <main class="columns">
@@ -14,11 +15,14 @@
         <div id="ifs-manage">
           <div id="ifs-list">
             <div id="ifs-div-container">
-              <div id="ifs-list-container"></div>
+              <div id="ifs-list-container">
+                <input type="text" id="if-designate-name" class="hide" placeholder="Choose a title...">
+              </div>
               <div id="if-actions">
                 <div id="cancel-actions-imagefeed" class="button hide">Cancel</div>
                 <div id="new-imagefeed" class="button">New</div>
                 <div id="orphan-imagefeed" class="button hide">Orphan</div>
+                <div id="upload-imagefeed" class="button hide">Upload</div>
               </div>
             </div>
           </div>
@@ -32,7 +36,7 @@
               <label for="if-file-input">Choose images</label>
             </div>
             <div id="if-image-preview" class="hide">
-              <img/>
+              <div id="if-fullscreen-toggle"></div>
             </div>
           </div>
         </div>
@@ -48,7 +52,9 @@
       </section>
     </main>
     <div id="stamps">
-      <div class="image-label"></div>
+      <label class="image-label" draggable="true"></label>
+      <div class="label-spacer"></div>
+      <img class="image-element hide">
     </div>
     <script src="js/actions.js"></script>
     <script src="js/main.js"></script>

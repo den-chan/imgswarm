@@ -5,9 +5,4 @@ var uiEvents = {
       this.classList.toggle("minus")
     }
   }
-}
-
-var user;
-function loadUser (response) {
-  user = response.userObject
-}
+}, service = function () {}

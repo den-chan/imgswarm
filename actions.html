@@ -6,6 +6,7 @@
     <link rel="icon" href="data:;base64,=">
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/fonts.css">
+    <script> const SERVICE_WORKERS = "serviceWorker" in navigator </script>
   </head>
   <body>
     <main class="columns">
@@ -16,10 +17,11 @@
           <div id="ifs-list">
             <div id="ifs-div-container">
               <div id="ifs-list-container">
-                <input type="text" id="if-designate-name" class="hide" placeholder="Choose a title...">
+                <input type="text" id="if-name-field" class="hide" placeholder="Choose a title...">
               </div>
               <div id="if-actions">
-                <div id="cancel-actions-imagefeed" class="button hide">Cancel</div>
+                <div id="delete-imagefeed" class="button hide">Delete</div>
+                <div id="return-imagefeed" class="button hide">Return</div>
                 <div id="new-imagefeed" class="button">New</div>
                 <div id="orphan-imagefeed" class="button hide">Orphan</div>
                 <div id="upload-imagefeed" class="button hide">Upload</div>
@@ -52,10 +54,12 @@
       </section>
     </main>
     <div id="stamps">
+      <label class="if-label"></label>
       <label class="image-label" draggable="true"></label>
       <div class="label-spacer"></div>
       <img class="image-element hide">
     </div>
+    <script src="lib/webtorrent.min.js"></script>
     <script src="js/actions.js"></script>
     <script src="js/main.js"></script>
   </body>

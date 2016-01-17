@@ -1,6 +1,17 @@
+/*
+var client = new WebTorrent();
+client.seed(user.currentImageFeed.images[0].file, {
+  name: user.currentImageFeed.name + ": " + user.currentImageFeed.images[0].name,
+  createdBy: "Imgswarm v0.0",
+  announceList:[["wss://imgswarm.herokuapp.com"]]
+}, function (err, tor) {});
+client.torrents[0]
+*/
+
 var preview, uiEvents = {
   "": {
-    load: function () {
+    load: function (e) {
+      e.stopPropagation();
       preview = $("#if-image-preview");
       preview.requestFullscreen =
         preview.requestFullscreen ||
@@ -13,23 +24,64 @@ var preview, uiEvents = {
         document.mozCancelFullScreen
     }
   },
+  "#if-name-field": {
+    input: function (e) {
+      user.currentImageFeed.name = this.value;
+      $("#ifs-list-container > [data-if-current]").textContent = this.value;
+      sendMessage({messageType: "updateImageFeed", value: {id: user.currentId, name: this.value}})
+    },
+    keypress: function (e) {
+      if (e.which === 13) {
+        e.preventDefault();
+        this.blur();
+      }
+    }
+  },
   "#new-imagefeed": {
     click: function () {
-      $("#ifs-manage").classList.toggle("active");
-      $("#new-imagefeed").classList.toggle("hide");
-      $("#cancel-actions-imagefeed").classList.toggle("hide");
-      $("#if-designate-name").classList.toggle("hide")
+      $("#if-name-field").value = "";
+      var label = $("#stamps > .if-label").cloneNode(true),
+          ifLabels = (function (l) {
+            return !(l = $("#ifs-list-container > .if-label")) ? [] : l.constructor.name !== "Array" ? [l] : l
+          })(),
+          nextId = ifLabels.map(function (el) { return el.dataset.imagefeedId }).reduce(Math.max, -1) + 1;
+      label.setAttribute("data-imagefeed-id", nextId);
+      label.setAttribute("data-if-current", "");
+      $("#ifs-list-container").appendChild(label);
+      addEvents({ "#ifs-list-container > .if-label:last-child": { click: ifLabelCallbacks } });
+      $("#ifs-list-container").appendChild(document.createElement("br"));
+      user.currentImageFeed = user.imageFeeds[nextId] = new ImageFeed(nextId);
+      user.currentId = nextId;
+      $("#ifs-list-container > [data-if-current]").textContent = user.currentImageFeed.name
+      toggleImageFeed()
     }
   },
   "#orphan-imagefeed": {
     click: function () {}
   },
-  "#cancel-actions-imagefeed": {
+  "#delete-imagefeed": {
     click: function () {
-      $("#ifs-manage").classList.toggle("active");
-      $("#new-imagefeed").classList.toggle("hide");
-      $("#cancel-actions-imagefeed").classList.toggle("hide");
-      $("#if-designate-name").classList.toggle("hide")
+      toggleImageFeed();
+      $("#upload-imagefeed").classList.toggle("hide");
+      $("#if-image-upload > *").forEach(function (el) { el.classList.toggle("hide") });
+      $("#ifs-list-container").removeChild($("#ifs-list-container > [data-if-current] + br"));
+      $("#ifs-list-container").removeChild($("#ifs-list-container > [data-if-current]"));
+      ($("#if-directory > *, #if-image-preview > img") || []).map(function (el) { el.parentNode.removeChild(el) });
+      sendMessage({ messageType: "updateImageFeed", value: {id: user.currentId, destroy: ""} });
+      user.imageFeeds[user.currentId] = null;
+      delete user.currentImageFeed;
+      delete user.currentId
+    }
+  },
+  "#return-imagefeed": {
+    click: function () {
+      toggleImageFeed();
+      $("#upload-imagefeed").classList.toggle("hide")
+      $("#if-image-upload > *").forEach(function (el) { el.classList.toggle("hide") });
+      ($("#if-directory > *, #if-image-preview > img") || []).map(function (el) { el.parentNode.removeChild(el) });
+      $("#ifs-list-container > [data-if-current]").removeAttribute("data-if-current");
+      delete user.currentImageFeed;
+      delete user.currentId
     }
   },
   "#upload-imagefeed": {
@@ -37,25 +89,30 @@ var preview, uiEvents = {
       $("#if-image-upload > *").forEach(function (el) { el.classList.toggle("hide") });
     }
   },
+  "#ifs-list-container > .if-label": { // move to dynamic
+    click: function () {}
+  },
   "#if-file-input": {
     change: function (e) {
       e.stopPropagation();
       e.preventDefault();
-      handleFiles(e.target.files)
+      user.currentImageFeed.capture(e.target.files).then(handleImages)
     }
   },
   "#if-image-upload": {
     dragenter: function (e) {
+      if (!$("#if-image-preview").classList.contains("hide")) return true;
       e.stopPropagation();
       e.preventDefault();
       $("#if-image-upload").classList.add("drag")
     },
     "dragleave dragover drop": function (e) {
+      if (!$("#if-image-preview").classList.contains("hide")) return true;
       e.stopPropagation();
       e.preventDefault();
       switch (e.type) {
         case "drop":
-          handleFiles(e.dataTransfer.files);
+          user.currentImageFeed.capture(e.dataTransfer.files).then(handleImages);
         case "dragleave":
           $("#if-image-upload").classList.remove("drag");
           break
@@ -76,31 +133,58 @@ var preview, uiEvents = {
       }
     }
   }
+}, service = function () {
+  sendMessage({ messageType: "checklogin" }).then(function (response) {
+    if (!response) return $("#address").textContent = "Not logged in.";
+    window.user = { address: response.userObject.address, imageFeeds: [] };
+    $("#address").textContent = window.user.address;
+    var label, i;
+    for (i in response.userObject.imageFeeds) {
+      user.imageFeeds[i = parseInt(i)] = new ImageFeed(i, response.userObject.imageFeeds[i].name);
+      user.imageFeeds[i].import(response.userObject.imageFeeds[i].images);
+      label = $("#stamps > .if-label").cloneNode(true);
+      label.setAttribute("data-imagefeed-id", i);
+      label.textContent = window.user.imageFeeds[i].name;
+      $("#ifs-list-container").appendChild(label);
+      $("#ifs-list-container").appendChild(document.createElement("br"));
+    }
+    addEvents({ "#ifs-list-container > .if-label": { click: ifLabelCallbacks } });
+    if (typeof i !== "undefined") $("#ifs-list-container > .if-label:first-of-type").setAttribute("data-if-current", "");
+  })
+};
+
+function ifLabelCallbacks () {
+  ($("#if-directory > *, #if-image-preview > img") || []).map(function (el) { el.parentNode.removeChild(el) });
+  this.setAttribute("data-if-current", "");
+  user.currentImageFeed = user.imageFeeds[user.currentId = this.dataset.imagefeedId];
+  $("#if-name-field").value = user.currentImageFeed.name;
+  handleImages(user.currentImageFeed.images);
+  toggleImageFeed();
+  $("#if-image-preview > img:not(.hide)").focus()
+};
+
+function toggleImageFeed () {
+  $("#new-imagefeed").classList.toggle("hide");
+  $("#delete-imagefeed").classList.toggle("hide");
+  $("#return-imagefeed").classList.toggle("hide");
+  $("#if-name-field").classList.toggle("hide");
+  $("#ifs-manage").classList.toggle("active");
 }
 
-var user, imageFeed;
-function loadUser (response) {
-  if (!response) return $("#address").textContent = "Not logged in."
-  user = response.userObject;
-  $("#address").textContent = user.address
-}
-
-function handleFiles (files) {
-  if (imageFeed) imageFeed.capture(files);
-  else imageFeed = new ImageFeed(files);
+function handleImages (images) {
   var label, spacer, img, ix;
   ix = $("#if-directory > *") ? parseInt($("#if-directory > label:last-of-type").dataset.imageId) + 1 : 0;
   if (ix === 0) {
     spacer = $("#stamps > .label-spacer").cloneNode(true);
     $("#if-directory").appendChild(spacer)
   }
-  for (var i = 0, j = ix; i < files.length; i++, j++) {
+  for (var i = 0, j = ix; i < images.length; i++, j++) {
     label = $("#stamps > .image-label").cloneNode(true);
     label.setAttribute("data-image-id", j);
     $("#if-directory").appendChild(label);
     spacer = $("#stamps > .label-spacer").cloneNode(true);
     $("#if-directory").appendChild(spacer);
-    label.textContent = imageFeed.files[j].name;
+    label.textContent = user.currentImageFeed.images[j].name;
     img = $("#stamps > .image-element").cloneNode(true);
     img.setAttribute("tabIndex", 0);
     $("#if-image-preview").appendChild(img)
@@ -108,21 +192,26 @@ function handleFiles (files) {
   addEvents({
     ["#if-directory > label:nth-of-type(n+" + (ix+1) + ")"]: {
       click: function (e) {
-        var cur = $("#if-directory > label[contenteditable]"),
-            id = parseInt(this.dataset.imageId), img = $("#if-image-preview > img:nth-of-type(" + (id+1) + ")");
+        var imageFeed = user.currentImageFeed, cur = $("#if-directory > label[contenteditable]"),
+            id = this.dataset.imageId, img = $("#if-image-preview > img:nth-of-type(" + (parseInt(id)+1) + ")");
         if (cur) {
           $("#if-image-preview > img:nth-of-type(" + (parseInt(cur.dataset.imageId)+1) + ")").classList.add("hide");
           cur.removeAttribute("contenteditable")
         }
-        if (!imageFeed.urls[id]) img.src = imageFeed.urls[id] = window.URL.createObjectURL( imageFeed.files[id] );
+        if (!img.hasAttribute("src")) {
+          img.src = SERVICE_WORKERS && imageFeed.images[id].isSeeded ?
+            "images/feed-" + imageFeed.id + "/" + id + "." + imageFeed.images[id].ext :
+            ( imageFeed.images[id].blobURL = window.URL.createObjectURL( imageFeed.images[id].file ) )
+        }
         img.classList.remove("hide");
         this.setAttribute("contenteditable", "");
-        if (!cur || cur && parseInt(cur.dataset.imageId) !== id) img.focus();
+        if (!cur || cur && cur.dataset.imageId !== id) img.focus();
       },
       keypress: function (e) {
         if (e.which === 13) {
           e.preventDefault();
           this.blur();
+          document.getSelection().removeAllRanges();
           $("#if-image-preview > img:nth-of-type(" + (parseInt(this.dataset.imageId)+1) + ")").focus()
         }
       },
@@ -146,6 +235,13 @@ function handleFiles (files) {
       },
       dragstart: function (e) {
         e.dataTransfer.setData("text", $("#if-directory > label").indexOf(e.target));
+      },
+      input: function (e) {
+        user.currentImageFeed.images[e.target.dataset.imageId].name = e.target.textContent;
+        sendMessage({messageType: "updateImageFeed", value: {
+          id: user.currentId,
+          imageName: [e.target.dataset.imageId, e.target.textContent]
+        }})
       }
     },
     ["#if-image-preview > img:nth-of-type(n+" + (ix+1) + ")"]: {
@@ -171,15 +267,23 @@ function handleFiles (files) {
         e.stopPropagation();
         e.preventDefault();
         if (e.type === "drop") {
-          var ix = parseInt(e.dataTransfer.getData("text")),
-              spacer = e.target,
-              label = $("#if-directory > label:nth-of-type(" + (ix+1) + ")"),
-              img = $("#if-image-preview > img:nth-child(" + (ix+1) + ")"),
-              targetImg = $("#if-image-preview > img:nth-of-type(" + (ix+1) + ")");
+          var spacer = e.target,
+              ixfrom = parseInt(e.dataTransfer.getData("text")),
+              ixto = $("#if-directory > .label-spacer").indexOf(spacer),
+              order = Object.keys($("#if-directory > label")).map(Number),
+              label = $("#if-directory > label:nth-of-type(" + (ixfrom+1) + ")"),
+              img = $("#if-image-preview > img:nth-of-type(" + (ixfrom+1) + ")"),
+              targetImg = $("#if-image-preview > img:nth-of-type(" + (ixto+1) + ")");
+          order.splice(ixto - (ixto > ixfrom), 0, order.splice(ixfrom, 1)[0]);
           $("#if-directory").insertBefore(label, spacer);
-          $("#if-directory").insertBefore($("#if-directory > div.label-spacer:nth-of-type(" + (ix+1) + ")"), label);
+          $("#if-directory").insertBefore($("#if-directory > div.label-spacer:nth-of-type(" + (ixfrom+1) + ")"), label);
           targetImg ? $("#if-image-preview").insertBefore(img, targetImg) : $("#if-image-preview").appendChild(img);
-          spacer.classList.remove("drag")
+          spacer.classList.remove("drag");
+          label.dispatchEvent(new Event("click"));
+          user.currentImageFeed.images = order.map(function (index) {
+            return user.currentImageFeed.images[index]
+          });
+          sendMessage({ messageType: "updateImageFeed", value: { id: user.currentId, order: order } })
         }
       }
     }
@@ -201,18 +305,58 @@ function handleFiles (files) {
   $("#upload-imagefeed").classList.toggle("hide")
   $("#if-image-upload > *").forEach(function (el) { el.classList.toggle("hide") });
   $("#if-directory > label:nth-of-type(" + (ix+1) + ")").dispatchEvent(new Event("click"))
-  // ready to seed: sendMessage({messageType: "updateImageFeeds", value: x})
 }
 
-function ImageFeed (initFiles) {
-  this.files = [];
-  this.urls = []
+function ImageFeed (id, name) {
+  var self = this;
+  if (typeof id === "number") this.id = id;
+  else throw "No ID"; // error
+  this.name = name || "Untitled imagefeed";
+  this.images = [];
   
   this.capture = function (files) {
-    for (var i = 0; i < files.length; i++) {
-      this.files.push(files[i]);
-      user.imageFeeds[i] = files[i]
+    return Promise.all( Array.prototype.slice.call(files).map(function (file, i) {
+      return Promise.resolve( new Image(files[i]) );
+    }) ).then(function (images) {
+      var j = self.images.length;
+      for (var i = 0; i < images.length; i++) {
+        images[i].id = i + j;
+        self.images.push(images[i])
+      }
+      return sendMessage({
+        messageType: "updateImageFeed",
+        value: {id: self.id, name: self.name, add: images.map(function (img) { return img.export() })}
+      }).catch(function (err) {
+        console.log(err)
+        if (!SERVICE_WORKERS) {
+          //localforage
+        }
+      }).then(function () { return images })
+    })
+  };
+  this.import = function (arr) {
+    var j = self.images.length;
+    self.images = arr.map(function (obj, i) { return new Image(obj, i + j) })
+  }
+}
+
+function Image (img, id) {
+  var self = this;
+  this.name = img.name;
+  this.ext = (/\.(.{0,16})$/.exec(img.name) || [,""])[1];
+  this.file = img.file || Blob.prototype.slice.call(img);
+  if (typeof id !== "undefined") this.id = id;
+  if (img.URL) this.URL = img.URL;
+  this.isSeeded = false;
+  
+  this.export = function () {
+    return {
+      name: self.name,
+      ext: self.ext,
+      file: self.file,
+      id: self.id,
+      URL: self.URL,
+      isSeeded: false
     }
   }
-  this.capture(initFiles);
 }

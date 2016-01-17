@@ -1,26 +1,40 @@
 /**
  * @author den-chan | https://den-chan.github.io | den-chan@tuta.io
  */
-var cacheName = "v1.106 10-1-2016";
+var cacheName = "v1.107 16-1-2016", swScope = self;
 self.importScripts("../lib/localforage.min.js", "../lib/ripemd160.js");
 
 /// Life Cycle ///
 
 self.addEventListener("install", function(event) {
   event.waitUntil(
-    self.caches.open(cacheName).then(function(cache) {
+    self.caches.open(cacheName).then(function(cache) { // Promise.all with "image cache"?
       return cache.addAll([
         "/",
         "index.html",
         "imagefeed.html",
+        "actions.html",
         "js/index.js",
         "js/imagefeed.js",
+        "js/actions.js",
         "lib/webtorrent.min.js",
         "lib/localforage.min.js",
         "lib/ripemd160.js",
-        "css/main.css"
+        "css/main.css",
+        "css/fonts.css"
       ]);
     }).then(function () { self.skipWaiting() })
+  )
+});
+
+self.addEventListener("activate", function(event) {
+  var cacheWhitelist = [cacheName/*, "image cache"*/];
+  event.waitUntil(
+    self.caches.keys().then(function(keyList) {
+      return Promise.all(keyList.map(function(key, i) {
+        if (cacheWhitelist.indexOf(key) === -1) return self.caches.delete(keyList[i]);
+      }));
+    }).then(function () { self.clients.claim() })
   )
 });
 
@@ -33,17 +47,6 @@ self.addEventListener("fetch", function(event) {
       })
   )
 });
-
-self.addEventListener("activate", function(event) {
-  var cacheWhitelist = [cacheName];
-  event.waitUntil(
-    self.caches.keys().then(function(keyList) {
-      return Promise.all(keyList.map(function(key, i) {
-        if (cacheWhitelist.indexOf(key) === -1) return self.caches.delete(keyList[i]);
-      }));
-    }).then(function () { self.clients.claim() })
-  )
-})
 
 /// Message handling ///
 //
@@ -86,8 +89,8 @@ self.addEventListener("message", function(event) {
     case "logout":
       return persistentUser.logout().then(postBack);
       
-    case "updateImageFeeds":
-      return persistentUser.updateImageFeeds(data.value).then(postBack).catch(errorBack)
+    case "updateImageFeed":
+      return persistentUser.updateImageFeed(data.value).then(postBack).catch(errorBack)
 
   }
 })
@@ -208,7 +211,7 @@ function User (auth) {
   var user, self = this;
   Object.defineProperty(self, "user", {
     get: function () { return user },
-    set: function () { return false }
+    set: function () { return false } // error
   });
   
   Object.defineProperty(self, "handle", {
@@ -228,7 +231,7 @@ function User (auth) {
       self.address = result;
       user = {
         address: result,
-        imageFeeds: {}
+        imageFeeds: []
       }
       return auth.initialise(user).then(function (userObject) {
 
@@ -373,9 +376,41 @@ function User (auth) {
     })
   }
   
-  this.updateImageFeeds = function (imageFeeds) {
-    console.log(imageFeeds);
-    return "ok"
+  this.updateImageFeed = function (data) {
+    var id = data.id;
+    if (!user.imageFeeds[id]) user.imageFeeds[id] = {images: []};
+    if ("name" in data) user.imageFeeds[id].name = data.name;
+    if ("imageName" in data) {
+      var target = user.imageFeeds[id].images.filter(function (img) { return img.id == data.imageName[0] })[0]
+      if (target) target.name = data.imageName[1]; // else error
+    }
+    if ("add" in data) {
+      data.add.forEach(function (image, i) {
+        delete image.blobURL;
+        image.URL = "images/feed-" + id + "/" + (user.imageFeeds[id].images.length + i) + "." + image.ext
+      });
+      user.imageFeeds[id].images = user.imageFeeds[id].images.concat(data.add)
+      /*return swScope.caches.open("image cache").then(function (cache) {
+        data.add.forEach(function (image) {
+          var request = new Request(image.URL, {mode: "same-origin", referrer: swScope.location.origin}),
+              response = new Response(image.file);
+          cache.put(request, response)
+        })
+      }).then(Promise.resolve("ok"))*/
+    } else if ("destroy" in data) {
+      /*return swScope.caches.open("image cache").then(function (cache) {
+        user.imageFeeds[id].images.forEach(function (image) {
+          cache.delete(image.URL)
+        })
+      }).then(Promise.resolve("ok"))*/
+      user.imageFeeds[id] = null
+    }
+    if ("order" in data) {
+      user.imageFeeds[id].images = data.order.map(function (index) {
+        return user.imageFeeds[id].images[index]
+      })
+    }
+    return Promise.resolve("ok")
   }
 }
 

@@ -23,6 +23,11 @@ main.columns {
   height: auto
 }
 
+a {
+  color: inherit;
+  text-decoration: none
+}
+
 #stamps, .hide {
   display: none !important
 }
@@ -179,7 +184,7 @@ div#ifs-list {
   flex: 0 100%;
   position: relative
 }
-input#if-designate-name {
+input#if-name-field {
   margin: .3rem;
   padding: calc(.3rem - 1px) calc(.3rem + 1px);
   font: 12pt serif;
@@ -187,16 +192,32 @@ input#if-designate-name {
   border: 0;
   border-radius: .3rem
 }
-input#if-designate-name:focus {
+input#if-name-field:focus {
   border: 1px solid #ccc;
   background: white;
   padding: calc(.3rem - 2px) .3rem
 }
 div#ifs-div-container,
-div#ifs-list-container{
+div#ifs-list-container {
   width: 100%;
   height: 100%;
   position: absolute
+}
+div#ifs-list-container{
+  overflow-y: auto
+}
+label.if-label {
+  display: inline-block;
+  margin: .5rem .6rem -.5rem;
+  cursor: pointer;
+  padding: .3rem;
+  border-radius: .3rem
+}
+label.if-label:hover {
+  background: seashell
+}
+.active label.if-label {
+  display: none
 }
 div#if-actions {
   position: absolute;
@@ -269,10 +290,7 @@ div#if-directory > label {
   margin: .4rem .6rem;
   cursor: pointer;
   display: inline-block;
-  border-radius: .3rem;
-  
-  background: white
-  
+  border-radius: .3rem
 }
 div#if-directory > label.image-label:first-child {
   margin-top: .8rem

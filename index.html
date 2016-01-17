@@ -6,13 +6,16 @@
     <link rel="icon" href="data:;base64,=">
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/fonts.css">
+    <script> const SERVICE_WORKERS = "serviceWorker" in navigator </script>
   </head>
   <body>
     <main class="rows">
       <label id="logo">I</label>
       <input id="search" type="text" placeholder="&#8202;search for an image feed">
       <div id="auth">
-        <div id="user-menu" class="hide"></div>
+        <div id="user-menu" class="hide">
+          <a href="actions.html" id="actions-link"></a>
+        </div>
         <button>Log in</button>
       </div>
       <div id="results"></div>
@@ -30,6 +33,7 @@
         <div class="card"></div>
       </div>
     </div>
+    <script src="lib/webtorrent.min.js"></script>
     <script src="js/index.js"></script>
     <script src="js/main.js"></script>
   </body>

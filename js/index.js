@@ -37,15 +37,16 @@ var uiEvents = {
       })
     }
   }
-};
-
-function loadUser(response) {
+}, service = function () {
+  sendMessage({ messageType: "checklogin" }).then(loadUser);
+}
+function loadUser (response) {
   if (response) {
     window.user = response.userObject;
     $("div#auth > button").classList.add("hide");
     $("#user-menu").classList.remove("hide");
     $("div#auth > button").textContent = "Log out";
-    $("#user-menu").textContent = response.userid
+    $("#actions-link").textContent = response.userid
   }
   else console.log(response);
 }

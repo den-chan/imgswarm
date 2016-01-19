@@ -1,3 +1,5 @@
+function service () {}
+
 var uiEvents = {
   "#toggle-nav": {
     click: function () {
@@ -5,4 +7,4 @@ var uiEvents = {
       this.classList.toggle("minus")
     }
   }
-}, service = function () {}
+}

@@ -31,6 +31,9 @@ a {
 #stamps, .hide {
   display: none !important
 }
+.softhide {
+  display: none
+}
 
 /* index.html */
 
@@ -50,6 +53,9 @@ input#search {
 }
 div#auth {
   flex: 1 3rem
+}
+div#auth > * {
+  cursor: pointer
 }
 div#auth > button {
   padding: 0;
@@ -72,7 +78,7 @@ div#auth:hover > div#user-menu:not(.hide) + button {
 }
 div#user-menu {
   text-align: center;
-  line-height: 2.8rem;
+  line-height: calc(3rem - 2px);
   color: maroon
 }
 div#results {

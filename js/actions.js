@@ -8,11 +8,30 @@ client.seed(user.currentImageFeed.images[0].file, {
 client.torrents[0]
 */
 
-var preview, uiEvents = {
+function service () {
+  eventHandler({ eventType: "checklogin" }).then(function (response) {
+    if (!response.value) return $("#address").textContent = "Not logged in.";
+    window.user.imageFeeds = response.value.imageFeeds;
+    $("#address").textContent = window.user.address;
+    var label, i;
+    for (i in response.value.imageFeeds) {
+      user.imageFeeds[i = parseInt(i)] = new ImageFeed(i, response.value.imageFeeds[i].name);
+      user.imageFeeds[i].import(response.value.imageFeeds[i].images);
+      label = $("#stamps > .if-label").cloneNode(true);
+      label.setAttribute("data-imagefeed-id", i);
+      label.textContent = window.user.imageFeeds[i].name;
+      $("#ifs-list-container").appendChild(label);
+      $("#ifs-list-container").appendChild(document.createElement("br"));
+    }
+    addEvents({ "#ifs-list-container > .if-label": ifLabelEvents });
+    if (typeof i !== "undefined") $("#ifs-list-container > .if-label:first-of-type").setAttribute("data-if-current", "");
+  })
+};
+var uiEvents = {
   "": {
     load: function (e) {
       e.stopPropagation();
-      preview = $("#if-image-preview");
+      var preview = $("#if-image-preview");
       preview.requestFullscreen =
         preview.requestFullscreen ||
         preview.webkitRequestFullscreen ||
@@ -22,13 +41,27 @@ var preview, uiEvents = {
         document.webkitExitFullScreen ||
         document.webkitCancelFullScreen ||
         document.mozCancelFullScreen
+    },
+    keydown: function (e) {
+      e.stopPropagation();
+      var w = e.which;
+      if (!imageFocus || w !== 37 && w !== 39) return false;
+      window.getSelection().removeAllRanges();
+      var cur = $("#if-directory > label").indexOf($("#if-directory > label[contenteditable]")),
+          tot = $("#if-directory > label").length,
+          nxt = (cur + w - 38 + tot) % tot + 1;
+      $("#if-directory > label:nth-of-type(" + nxt + ")").dispatchEvent(new Event("click"));
+      $("#if-image-preview > img:nth-of-type(" + nxt + ")").focus();
+      var top = $("#if-directory > [contenteditable]").offsetTop - $("#if-directory").offsetTop,
+          hgt = $("#if-directory > [contenteditable]").offsetHeight - $("#if-directory").offsetHeight;
+      $("#if-directory").scrollTop = Math.max(Math.min($("#if-directory").scrollTop, top), top + hgt)
     }
   },
   "#if-name-field": {
     input: function (e) {
       user.currentImageFeed.name = this.value;
       $("#ifs-list-container > [data-if-current]").textContent = this.value;
-      sendMessage({messageType: "updateImageFeed", value: {id: user.currentId, name: this.value}})
+      eventHandler({eventType: "updateImageFeed", value: {id: user.currentId, name: this.value}})
     },
     keypress: function (e) {
       if (e.which === 13) {
@@ -48,7 +81,7 @@ var preview, uiEvents = {
       label.setAttribute("data-imagefeed-id", nextId);
       label.setAttribute("data-if-current", "");
       $("#ifs-list-container").appendChild(label);
-      addEvents({ "#ifs-list-container > .if-label:last-child": { click: ifLabelCallbacks } });
+      addEvents({ "#ifs-list-container > .if-label:last-child": ifLabelEvents });
       $("#ifs-list-container").appendChild(document.createElement("br"));
       user.currentImageFeed = user.imageFeeds[nextId] = new ImageFeed(nextId);
       user.currentId = nextId;
@@ -67,7 +100,7 @@ var preview, uiEvents = {
       $("#ifs-list-container").removeChild($("#ifs-list-container > [data-if-current] + br"));
       $("#ifs-list-container").removeChild($("#ifs-list-container > [data-if-current]"));
       ($("#if-directory > *, #if-image-preview > img") || []).map(function (el) { el.parentNode.removeChild(el) });
-      sendMessage({ messageType: "updateImageFeed", value: {id: user.currentId, destroy: ""} });
+      eventHandler({ eventType: "updateImageFeed", value: {id: user.currentId, destroy: ""} });
       user.imageFeeds[user.currentId] = null;
       delete user.currentImageFeed;
       delete user.currentId
@@ -127,69 +160,14 @@ var preview, uiEvents = {
         document.exitFullscreen();
         this.removeAttribute("data-fullscreen")
       } else {
-        preview.requestFullscreen();
+        $("#if-image-preview").requestFullscreen();
         this.setAttribute("data-fullscreen", "");
         $("#if-image-preview > img:not(.hide)").focus()
       }
     }
   }
-}, service = function () {
-  sendMessage({ messageType: "checklogin" }).then(function (response) {
-    if (!response) return $("#address").textContent = "Not logged in.";
-    window.user = { address: response.userObject.address, imageFeeds: [] };
-    $("#address").textContent = window.user.address;
-    var label, i;
-    for (i in response.userObject.imageFeeds) {
-      user.imageFeeds[i = parseInt(i)] = new ImageFeed(i, response.userObject.imageFeeds[i].name);
-      user.imageFeeds[i].import(response.userObject.imageFeeds[i].images);
-      label = $("#stamps > .if-label").cloneNode(true);
-      label.setAttribute("data-imagefeed-id", i);
-      label.textContent = window.user.imageFeeds[i].name;
-      $("#ifs-list-container").appendChild(label);
-      $("#ifs-list-container").appendChild(document.createElement("br"));
-    }
-    addEvents({ "#ifs-list-container > .if-label": { click: ifLabelCallbacks } });
-    if (typeof i !== "undefined") $("#ifs-list-container > .if-label:first-of-type").setAttribute("data-if-current", "");
-  })
-};
-
-function ifLabelCallbacks () {
-  ($("#if-directory > *, #if-image-preview > img") || []).map(function (el) { el.parentNode.removeChild(el) });
-  this.setAttribute("data-if-current", "");
-  user.currentImageFeed = user.imageFeeds[user.currentId = this.dataset.imagefeedId];
-  $("#if-name-field").value = user.currentImageFeed.name;
-  handleImages(user.currentImageFeed.images);
-  toggleImageFeed();
-  $("#if-image-preview > img:not(.hide)").focus()
-};
-
-function toggleImageFeed () {
-  $("#new-imagefeed").classList.toggle("hide");
-  $("#delete-imagefeed").classList.toggle("hide");
-  $("#return-imagefeed").classList.toggle("hide");
-  $("#if-name-field").classList.toggle("hide");
-  $("#ifs-manage").classList.toggle("active");
-}
-
-function handleImages (images) {
-  var label, spacer, img, ix;
-  ix = $("#if-directory > *") ? parseInt($("#if-directory > label:last-of-type").dataset.imageId) + 1 : 0;
-  if (ix === 0) {
-    spacer = $("#stamps > .label-spacer").cloneNode(true);
-    $("#if-directory").appendChild(spacer)
-  }
-  for (var i = 0, j = ix; i < images.length; i++, j++) {
-    label = $("#stamps > .image-label").cloneNode(true);
-    label.setAttribute("data-image-id", j);
-    $("#if-directory").appendChild(label);
-    spacer = $("#stamps > .label-spacer").cloneNode(true);
-    $("#if-directory").appendChild(spacer);
-    label.textContent = user.currentImageFeed.images[j].name;
-    img = $("#stamps > .image-element").cloneNode(true);
-    img.setAttribute("tabIndex", 0);
-    $("#if-image-preview").appendChild(img)
-  }
-  addEvents({
+}, imageUIEvents = function (ix) {
+  return {
     ["#if-directory > label:nth-of-type(n+" + (ix+1) + ")"]: {
       click: function (e) {
         var imageFeed = user.currentImageFeed, cur = $("#if-directory > label[contenteditable]"),
@@ -238,19 +216,15 @@ function handleImages (images) {
       },
       input: function (e) {
         user.currentImageFeed.images[e.target.dataset.imageId].name = e.target.textContent;
-        sendMessage({messageType: "updateImageFeed", value: {
+        eventHandler({eventType: "updateImageFeed", value: {
           id: user.currentId,
           imageName: [e.target.dataset.imageId, e.target.textContent]
         }})
       }
     },
     ["#if-image-preview > img:nth-of-type(n+" + (ix+1) + ")"]: {
-      focus: function () {
-        window.addEventListener("keydown", imageNavCallback, false)
-      },
-      blur: function () {
-        window.removeEventListener("keydown", imageNavCallback, false)
-      }
+      focus: function () { imageFocus = true },
+      blur: function () {imageFocus = false }
     },
     ["#if-directory > div.label-spacer:nth-of-type(n+" + (ix-!ix+2) + ")"]: {
       dragenter: function (e) {
@@ -283,80 +257,104 @@ function handleImages (images) {
           user.currentImageFeed.images = order.map(function (index) {
             return user.currentImageFeed.images[index]
           });
-          sendMessage({ messageType: "updateImageFeed", value: { id: user.currentId, order: order } })
+          eventHandler({ eventType: "updateImageFeed", value: { id: user.currentId, order: order } })
         }
       }
     }
-  });
-  function imageNavCallback (e) {
-    var w = e.which;
-    if (w !== 37 && w !== 39) return false;
-    window.getSelection().removeAllRanges();
-    var cur = $("#if-directory > label").indexOf($("#if-directory > label[contenteditable]")),
-        tot = $("#if-directory > label").length,
-        nxt = (cur + w - 38 + tot) % tot + 1;
-    $("#if-directory > label:nth-of-type(" + nxt + ")").dispatchEvent(new Event("click"));
-    $("#if-image-preview > img:nth-of-type(" + nxt + ")").focus();
-    var top = $("#if-directory > [contenteditable]").offsetTop - $("#if-directory").offsetTop,
-        hgt = $("#if-directory > [contenteditable]").offsetHeight - $("#if-directory").offsetHeight;
-    $("#if-directory").scrollTop = Math.max(Math.min($("#if-directory").scrollTop, top), top + hgt)
-  };
+  }
+}, ifLabelEvents = {
+  click: function () {
+    ($("#if-directory > *, #if-image-preview > img") || []).map(function (el) { el.parentNode.removeChild(el) });
+    this.setAttribute("data-if-current", "");
+    user.currentImageFeed = user.imageFeeds[user.currentId = this.dataset.imagefeedId];
+    $("#if-name-field").value = user.currentImageFeed.name;
+    handleImages(user.currentImageFeed.images);
+    toggleImageFeed();
+    $("#if-image-preview > img:not(.hide)").focus()
+  }
+};
 
+function toggleImageFeed () {
+  $("#new-imagefeed").classList.toggle("hide");
+  $("#delete-imagefeed").classList.toggle("hide");
+  $("#return-imagefeed").classList.toggle("hide");
+  $("#if-name-field").classList.toggle("hide");
+  $("#ifs-manage").classList.toggle("active");
+}
+
+function handleImages (images) {
+  var label, spacer, img, ix;
+  ix = $("#if-directory > *") ? parseInt($("#if-directory > label:last-of-type").dataset.imageId) + 1 : 0;
+  if (ix === 0) {
+    spacer = $("#stamps > .label-spacer").cloneNode(true);
+    $("#if-directory").appendChild(spacer)
+  }
+  for (var i = 0, j = ix; i < images.length; i++, j++) {
+    label = $("#stamps > .image-label").cloneNode(true);
+    label.setAttribute("data-image-id", j);
+    $("#if-directory").appendChild(label);
+    spacer = $("#stamps > .label-spacer").cloneNode(true);
+    $("#if-directory").appendChild(spacer);
+    label.textContent = user.currentImageFeed.images[j].name;
+    img = $("#stamps > .image-element").cloneNode(true);
+    img.setAttribute("tabIndex", 0);
+    $("#if-image-preview").appendChild(img)
+  }
+  addEvents(imageUIEvents(ix));
   $("#upload-imagefeed").classList.toggle("hide")
   $("#if-image-upload > *").forEach(function (el) { el.classList.toggle("hide") });
   $("#if-directory > label:nth-of-type(" + (ix+1) + ")").dispatchEvent(new Event("click"))
 }
 
 function ImageFeed (id, name) {
-  var self = this;
   if (typeof id === "number") this.id = id;
   else throw "No ID"; // error
   this.name = name || "Untitled imagefeed";
-  this.images = [];
-  
-  this.capture = function (files) {
-    return Promise.all( Array.prototype.slice.call(files).map(function (file, i) {
-      return Promise.resolve( new Image(files[i]) );
-    }) ).then(function (images) {
-      var j = self.images.length;
-      for (var i = 0; i < images.length; i++) {
-        images[i].id = i + j;
-        self.images.push(images[i])
-      }
-      return sendMessage({
-        messageType: "updateImageFeed",
-        value: {id: self.id, name: self.name, add: images.map(function (img) { return img.export() })}
-      }).catch(function (err) {
-        console.log(err)
-        if (!SERVICE_WORKERS) {
-          //localforage
-        }
-      }).then(function () { return images })
-    })
-  };
-  this.import = function (arr) {
-    var j = self.images.length;
-    self.images = arr.map(function (obj, i) { return new Image(obj, i + j) })
-  }
+  this.images = []
 }
+ImageFeed.prototype.capture = function (files) {
+  var self = this;
+  return Promise.all( Array.prototype.slice.call(files).map(function (file, i) {
+    return Promise.resolve( new Image(files[i]) );
+  }) ).then(function (images) {
+    var j = self.images.length;
+    for (var i = 0; i < images.length; i++) {
+      images[i].id = i + j;
+      self.images.push(images[i])
+    }
+    return eventHandler({
+      eventType: "updateImageFeed",
+      value: {id: self.id, name: self.name, add: images.map(function (img) { return img.export() })}
+    }).catch(function (err) {
+      console.log(err)
+      if (!SERVICE_WORKERS) {
+        //indexedDB
+      }
+    }).then(function () { return images })
+  })
+};
+ImageFeed.prototype.import = function (arr) {
+  var j = this.images.length;
+  this.images = arr.map(function (obj, i) { return new Image(obj, i + j) })
+};
+ImageFeed.prototype.constructor = ImageFeed;
 
 function Image (img, id) {
-  var self = this;
   this.name = img.name;
   this.ext = (/\.(.{0,16})$/.exec(img.name) || [,""])[1];
   this.file = img.file || Blob.prototype.slice.call(img);
   if (typeof id !== "undefined") this.id = id;
   if (img.URL) this.URL = img.URL;
   this.isSeeded = false;
-  
-  this.export = function () {
-    return {
-      name: self.name,
-      ext: self.ext,
-      file: self.file,
-      id: self.id,
-      URL: self.URL,
-      isSeeded: false
-    }
+};
+Image.prototype.export = function () {
+  return {
+    name: this.name,
+    ext: this.ext,
+    file: this.file,
+    id: this.id,
+    URL: this.URL,
+    isSeeded: false
   }
-}
+};
+Image.prototype.constructor = Image

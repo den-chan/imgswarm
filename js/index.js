@@ -1,35 +1,38 @@
+function service () {
+  eventHandler({ eventType: "checklogin" }).then(loadUser);
+}
+
 var uiEvents = {
   "div#auth > button": {
     click: function () {
       if (this.textContent === "Log in") $("#modal").classList.remove("hide");
       else if (this.textContent === "Log out") {
-        $("div#auth > button").classList.remove("hide");
+        $("div#auth > button").classList.remove("softhide");
         $("#user-menu").classList.add("hide");
         $("div#auth > button").textContent = "Log in";
-        $("#user-menu").textContent = null;
-        return sendMessage({ messageType: "logout" }).then(function (response) {
-          if (response !== "success") console.log("Couldn't log out", response); //Errorify
+        $("#actions-link").textContent = null;
+        return eventHandler({ eventType: "logout" }).then(function (response) {
+          if (response.value !== "success") console.log("Couldn't log out", response); //Errorify
           else user = null
         })
       }
-
     }
   },
   "button#existing-user": {
     click: function () {
       $("#modal").classList.add("hide")
-      return sendMessage({
-        messageType: "login",
+      return eventHandler({
+        eventType: "login",
         value: {handle: $("#username").value, password: prompt("Please enter your password")}
       }).then(loadUser)
     }
   },
   "button#new-user": {
     click: function () {
-      return sendMessage({ messageType: "checkunique", value: $("#username").value }).then(function (response) {
-        if (response) {
-          sendMessage({
-            messageType: "createuser",
+      return eventHandler({ eventType: "checkunique", value: { handle: $("#username").value } }).then(function (response) {
+        if (response.value) {
+          eventHandler({
+            eventType: "createuser",
             value: { password: prompt("Please enter your password") }
           }).then(loadUser)
         }
@@ -37,16 +40,14 @@ var uiEvents = {
       })
     }
   }
-}, service = function () {
-  sendMessage({ messageType: "checklogin" }).then(loadUser);
-}
+};
+
 function loadUser (response) {
-  if (response) {
-    window.user = response.userObject;
-    $("div#auth > button").classList.add("hide");
+  if (response.value) {
+    $("div#auth > button").classList.add("softhide");
     $("#user-menu").classList.remove("hide");
     $("div#auth > button").textContent = "Log out";
-    $("#actions-link").textContent = response.userid
+    $("#actions-link").textContent = response.value.userid
   }
-  else console.log(response);
+  else console.log(response.value);
 }

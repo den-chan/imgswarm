@@ -1,7 +1,7 @@
 /**
  * @author den-chan | https://den-chan.github.io | den-chan@tuta.io
  */
-  
+
 //indexedDB.deleteDatabase("imgswarm");
 //navigator.serviceWorker.getRegistration().then(function(r) {r.unregister()})
 //var reader = new FileReader(); reader.onloadend = function () { return console.log(reader.result) }; fetch("iconfont.ttf").then(function (response) { return response.blob() }).then(function (blob) { reader.readAsDataURL(blob) })
@@ -31,7 +31,7 @@ function eventHandler(data) {
         error = {code: [errmsg[2], errmsg[3]], name: result.name, message: errmsg[1]};
     return Promise.resolve({ eventType: data.eventType, error: error })
   }
-  
+
   switch (data.eventType) {
 
     case "checklogin":
@@ -52,7 +52,7 @@ function eventHandler(data) {
 
     case "logout":
       return user.logout().then(postBack);
-      
+
     case "updateImageFeed":
       return user.updateImageFeed(data.value).then(postBack).catch(errorBack)
 
@@ -148,7 +148,7 @@ Drum.prototype.constructor = Drum;
 
 function Auth (handle) {
   var auth = this;
-  
+
   Object.defineProperty(this, "handle", {
     get: function () { return auth._handle },
     set: function () { throw new CodedError([1, 1], "Auth error", "Cannot change credentials.") }
@@ -162,7 +162,7 @@ function Auth (handle) {
   Object.defineProperty(this, "password", { // Synchronous method, subsequent calls
     set: function (p) { if (typeof auth._password === "undefined") return (auth._password = p) }
   });
-  
+
   if (typeof handle === "object") {
     this._password = handle.password;
     this._handle = handle.handle
@@ -174,7 +174,7 @@ function Auth (handle) {
       })
       .catch(function () { return null })
   }
-  
+
   return false
 }
 
@@ -259,7 +259,7 @@ Auth.prototype.initialise = function (userObject) {
   })
 };
 
-Auth.prototype.setPrivateKey = function (val) {
+Auth.prototype.setPrivateKey = function (val) { // address key
   var auth = this;
   if (["crv", "d", "ext", "key_ops", "kty", "x", "y"].every(function (b) { return b in Object.keys(val) })) {
     throw new CodedError([1, 2], "Auth error", "Malformed key.")
@@ -284,7 +284,7 @@ Auth.prototype.constructor = Auth;
 function User (auth) {
   var user = this;
   this._auth = auth;
-  
+
   Object.defineProperty(this, "user", {
     get: function () { return user._user },
     set: function () { return false } // error
@@ -472,13 +472,11 @@ User.prototype.updateImageFeed = function (data) {
     if (target) target.name = data.imageName[1]; // else error
   }
   if ("add" in data) {
-    data.add.forEach(function (image, i) {
-      delete image.blobURL;
-      image.URL = "images/feed-" + id + "/" + (user.imageFeeds[id].images.length + i) + "." + image.ext
-    });
-    this.imageFeeds[id].images = this.imageFeeds[id].images.concat(data.add)
     /*return swScope.caches.open("image cache").then(function (cache) {
-      data.add.forEach(function (image) {
+      data.add.forEach(function (image, i) {
+        delete image.blobURL;
+        var ix = user.imageFeeds[id].images.reduce(function (a, b, i) { return b.id === image.id ? i : a }, null); // Array.prototype.find
+        user.imageFeeds[id].images[ix].URL = image.URL = "images/feed-" + id + "/" + ix + "." + image.ext;
         var request = new Request(image.URL, {mode: "same-origin", referrer: swScope.location.origin}),
             response = new Response(image.file);
         cache.put(request, response)
@@ -490,7 +488,7 @@ User.prototype.updateImageFeed = function (data) {
         cache.delete(image.URL)
       })
     }).then(Promise.resolve("ok"))*/
-    this._user.imageFeeds[id] = null
+    this.imageFeeds[id] = null
   }
   if ("order" in data) {
     this.imageFeeds[id].images = data.order.map(function (index) {
@@ -501,6 +499,65 @@ User.prototype.updateImageFeed = function (data) {
 };
 
 User.prototype.constructor = User;
+
+///  ImageFeed ///
+
+function ImageFeed (id, name) {
+  if (typeof id === "number") this.id = id;
+  else throw "No ID"; // error
+  this.name = name || "Untitled imagefeed";
+  this.images = []
+}
+ImageFeed.prototype.capture = function (files) {
+  var self = this;
+  return Promise.all( Array.prototype.slice.call(files).map(function (file, i) {
+    return Promise.resolve( new Image(files[i]) );
+  }) ).then(function (images) {
+    var j = self.images.length;
+    for (var i = 0; i < images.length; i++) {
+      images[i].id = i + j;
+      self.images.push(images[i])
+    }
+    return eventHandler({
+      eventType: "updateImageFeed",
+      value: {id: self.id, name: self.name, add: images.map(function (img) { return img.export() })}
+    }).catch(function (err) {
+      console.log(err)
+      if (!SERVICE_WORKERS) {
+        //indexedDB
+      }
+    }).then(function () { return images })
+  })
+};
+ImageFeed.prototype.import = function (arr) {
+  var j = this.images.length;
+  this.images = arr.map(function (obj, i) { return new Image(obj, i + j) })
+};
+ImageFeed.prototype.constructor = ImageFeed;
+
+/// Image ///
+
+function Image (img, id) {
+  this.name = img.name;
+  this.ext = (/\.(.{0,16})$/.exec(img.name) || [,""])[1];
+  this.file = img.file || Blob.prototype.slice.call(img);
+  if (typeof id !== "undefined") this.id = id;
+  if (img.URL) this.URL = img.URL;
+  this.isSeeded = false;
+};
+Image.prototype.export = function () {
+  return {
+    name: this.name,
+    ext: this.ext,
+    file: this.file,
+    id: this.id,
+    URL: this.URL,
+    isSeeded: false
+  }
+};
+Image.prototype.constructor = Image
+
+/// Initialiser ///
 
 new Drum().then(function (drum) {
   window.drum = drum;
@@ -513,7 +570,7 @@ new Drum().then(function (drum) {
     return window.user = null
   }
 }).then(function () {
-  if (SERVICE_WORKERS) {  
+  if (SERVICE_WORKERS) {
     navigator.serviceWorker.register("service.js", { scope: "." })
       .then(navigator.serviceWorker.ready)
       .then(function (registration) {

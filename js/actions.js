@@ -36,7 +36,7 @@ var uiEvents = {
         preview.requestFullscreen ||
         preview.webkitRequestFullscreen ||
         preview.mozRequestFullScreen;
-      document.exitFullscreen = 
+      document.exitFullscreen =
         document.exitFullscreen ||
         document.webkitExitFullScreen ||
         document.webkitCancelFullScreen ||
@@ -59,7 +59,6 @@ var uiEvents = {
   },
   "#if-name-field": {
     input: function (e) {
-      user.currentImageFeed.name = this.value;
       $("#ifs-list-container > [data-if-current]").textContent = this.value;
       eventHandler({eventType: "updateImageFeed", value: {id: user.currentId, name: this.value}})
     },
@@ -85,7 +84,7 @@ var uiEvents = {
       $("#ifs-list-container").appendChild(document.createElement("br"));
       user.currentImageFeed = user.imageFeeds[nextId] = new ImageFeed(nextId);
       user.currentId = nextId;
-      $("#ifs-list-container > [data-if-current]").textContent = user.currentImageFeed.name
+      $("#ifs-list-container > [data-if-current]").textContent = user.currentImageFeed.name;
       toggleImageFeed()
     }
   },
@@ -101,7 +100,6 @@ var uiEvents = {
       $("#ifs-list-container").removeChild($("#ifs-list-container > [data-if-current]"));
       ($("#if-directory > *, #if-image-preview > img") || []).map(function (el) { el.parentNode.removeChild(el) });
       eventHandler({ eventType: "updateImageFeed", value: {id: user.currentId, destroy: ""} });
-      user.imageFeeds[user.currentId] = null;
       delete user.currentImageFeed;
       delete user.currentId
     }
@@ -121,9 +119,6 @@ var uiEvents = {
     click: function () {
       $("#if-image-upload > *").forEach(function (el) { el.classList.toggle("hide") });
     }
-  },
-  "#ifs-list-container > .if-label": { // move to dynamic
-    click: function () {}
   },
   "#if-file-input": {
     change: function (e) {
@@ -162,7 +157,7 @@ var uiEvents = {
       } else {
         $("#if-image-preview").requestFullscreen();
         this.setAttribute("data-fullscreen", "");
-        $("#if-image-preview > img:not(.hide)").focus()
+        !$("#if-image-preview > img") || $("#if-image-preview > img:not(.hide)").focus()
       }
     }
   }
@@ -215,7 +210,6 @@ var uiEvents = {
         e.dataTransfer.setData("text", $("#if-directory > label").indexOf(e.target));
       },
       input: function (e) {
-        user.currentImageFeed.images[e.target.dataset.imageId].name = e.target.textContent;
         eventHandler({eventType: "updateImageFeed", value: {
           id: user.currentId,
           imageName: [e.target.dataset.imageId, e.target.textContent]
@@ -254,9 +248,6 @@ var uiEvents = {
           targetImg ? $("#if-image-preview").insertBefore(img, targetImg) : $("#if-image-preview").appendChild(img);
           spacer.classList.remove("drag");
           label.dispatchEvent(new Event("click"));
-          user.currentImageFeed.images = order.map(function (index) {
-            return user.currentImageFeed.images[index]
-          });
           eventHandler({ eventType: "updateImageFeed", value: { id: user.currentId, order: order } })
         }
       }
@@ -268,9 +259,9 @@ var uiEvents = {
     this.setAttribute("data-if-current", "");
     user.currentImageFeed = user.imageFeeds[user.currentId = this.dataset.imagefeedId];
     $("#if-name-field").value = user.currentImageFeed.name;
-    handleImages(user.currentImageFeed.images);
+    !user.currentImageFeed.images.length || handleImages(user.currentImageFeed.images);
     toggleImageFeed();
-    $("#if-image-preview > img:not(.hide)").focus()
+    !$("#if-image-preview > img") || $("#if-image-preview > img:not(.hide)").focus()
   }
 };
 
@@ -303,58 +294,5 @@ function handleImages (images) {
   addEvents(imageUIEvents(ix));
   $("#upload-imagefeed").classList.toggle("hide")
   $("#if-image-upload > *").forEach(function (el) { el.classList.toggle("hide") });
-  $("#if-directory > label:nth-of-type(" + (ix+1) + ")").dispatchEvent(new Event("click"))
+  !j || $("#if-directory > label:nth-of-type(" + (ix+1) + ")").dispatchEvent(new Event("click"))
 }
-
-function ImageFeed (id, name) {
-  if (typeof id === "number") this.id = id;
-  else throw "No ID"; // error
-  this.name = name || "Untitled imagefeed";
-  this.images = []
-}
-ImageFeed.prototype.capture = function (files) {
-  var self = this;
-  return Promise.all( Array.prototype.slice.call(files).map(function (file, i) {
-    return Promise.resolve( new Image(files[i]) );
-  }) ).then(function (images) {
-    var j = self.images.length;
-    for (var i = 0; i < images.length; i++) {
-      images[i].id = i + j;
-      self.images.push(images[i])
-    }
-    return eventHandler({
-      eventType: "updateImageFeed",
-      value: {id: self.id, name: self.name, add: images.map(function (img) { return img.export() })}
-    }).catch(function (err) {
-      console.log(err)
-      if (!SERVICE_WORKERS) {
-        //indexedDB
-      }
-    }).then(function () { return images })
-  })
-};
-ImageFeed.prototype.import = function (arr) {
-  var j = this.images.length;
-  this.images = arr.map(function (obj, i) { return new Image(obj, i + j) })
-};
-ImageFeed.prototype.constructor = ImageFeed;
-
-function Image (img, id) {
-  this.name = img.name;
-  this.ext = (/\.(.{0,16})$/.exec(img.name) || [,""])[1];
-  this.file = img.file || Blob.prototype.slice.call(img);
-  if (typeof id !== "undefined") this.id = id;
-  if (img.URL) this.URL = img.URL;
-  this.isSeeded = false;
-};
-Image.prototype.export = function () {
-  return {
-    name: this.name,
-    ext: this.ext,
-    file: this.file,
-    id: this.id,
-    URL: this.URL,
-    isSeeded: false
-  }
-};
-Image.prototype.constructor = Image

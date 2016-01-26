@@ -1,5 +1,9 @@
-require 'sinatra'
+require 'sinatra/base'
 
-get '/' do
-  File.read(File.join('public', 'index.html'))
+module Imgswarm
+  class App < Sinatra::Base
+    get '/' do
+      File.read(File.join('public', 'index.html'))
+    end
+  end
 end

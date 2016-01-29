@@ -4,6 +4,7 @@
 var cacheName = "v1.108 16-1-2016", swScope = self;
 
 /// Life Cycle ///
+// Can I load once only on first visit?
 
 self.addEventListener("install", function(event) {
   event.waitUntil(

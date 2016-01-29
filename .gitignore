@@ -1,3 +1,3 @@
 *.sh
-nginx/ssl/*.*
+ssl/
 trash/

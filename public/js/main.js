@@ -19,6 +19,16 @@ function addEvents (obj) {
 
 addEvents(uiEvents);
 
+var iceReader = new FileReader(), iceServers;
+iceReader.onloadend = function () {
+  iceServers = JSON.parse(iceReader.result)
+};
+fetch("data/ice-servers.json").then(function (response) {
+  return response.blob()
+}).then(function (blob) {
+  iceReader.readAsText(blob)
+})
+
 /// App events ///
 
 function eventHandler(data) {

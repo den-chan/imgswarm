@@ -1,13 +1,6 @@
-/*
-var client = new WebTorrent();
-client.seed(user.currentImageFeed.images[0].file, {
-  name: user.currentImageFeed.name + ": " + user.currentImageFeed.images[0].name,
-  createdBy: "Imgswarm v0.0",
-  announceList:[["wss://imgswarm.tk:5001"]]
-}, function (err, tor) {});
-client.torrents[0]
-*/
-
+/**
+ * @author den-chan | https://den-chan.github.io | den-chan@tuta.io
+ */
 function service () {
   eventHandler({ eventType: "checklogin" }).then(function (response) {
     if (!response.value) return $("#address").textContent = "Not logged in.";
@@ -26,7 +19,8 @@ function service () {
     addEvents({ "#ifs-list-container > .if-label": ifLabelEvents });
     if (typeof i !== "undefined") $("#ifs-list-container > .if-label:first-of-type").setAttribute("data-if-current", "");
   })
-};
+}
+
 var uiEvents = {
   "": {
     load: function (e) {
@@ -119,13 +113,15 @@ var uiEvents = {
   },
   "#publish-imagefeed": {
     click: function () {
-      var client = new WebTorrent();
+      var client = new WebTorrent(); //{ rtcConfig: { iceServers: iceServers } }
       client.seed(user.currentImageFeed.images[0].file, {
         name: user.currentImageFeed.name + ": " + user.currentImageFeed.images[0].name,
         createdBy: "Imgswarm v0.0",
         announceList:[["wss://imgswarm.tk:5001"]]
-      }, function (err, tor) {});
-      console.log( client.torrents[0] )
+      }, function (torrent) {
+        user.currentImageFeed.images[0].isSeeded = true;
+        user.currentImageFeed.images[0].torrent = torrent
+      })
     }
   },
   "#upload-imagefeed": {

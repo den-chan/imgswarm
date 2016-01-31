@@ -1,7 +1,7 @@
 /**
  * @author den-chan | https://den-chan.github.io | den-chan@tuta.io
  */
-var cacheName = "v1.108 16-1-2016", swScope = self;
+var cacheName = "v1.109 16-1-2016", swScope = self;
 
 /// Life Cycle ///
 // Can I load once only on first visit?
@@ -14,13 +14,15 @@ self.addEventListener("install", function(event) {
         "index.html",
         "imagefeed.html",
         "actions.html",
+        "js/main.js",
         "js/index.js",
         "js/imagefeed.js",
         "js/actions.js",
         "lib/webtorrent.min.js",
         "lib/ripemd160.js",
         "css/main.css",
-        "css/fonts.css"
+        "css/fonts.css",
+        "data/ice-servers.json"
       ]);
     }).then(function () { self.skipWaiting() })
   )

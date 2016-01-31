@@ -1,3 +1,6 @@
+/**
+ * @author den-chan | https://den-chan.github.io | den-chan@tuta.io
+ */
 function service () {
   eventHandler({ eventType: "checklogin" }).then(loadUser);
 }

@@ -25,8 +25,7 @@ RUN apk-install libstdc++
 
 COPY app.rb \
      config.ru \
-     Procfile \
-     ice-servers.json /usr/app/
+     Procfile /usr/app/
 EXPOSE 80
 ENV PORT=80
 CMD ["foreman", "start"]

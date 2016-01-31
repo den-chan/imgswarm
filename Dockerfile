@@ -21,8 +21,12 @@ RUN bundle install && \
     apk -U --purge del \
       alpine-sdk \
       ruby-dev
+RUN apk-install libstdc++
 
-COPY . /usr/app
+COPY app.rb \
+     config.ru \
+     Procfile \
+     ice-servers.json /usr/app/
 EXPOSE 80
 ENV PORT=80
 CMD ["foreman", "start"]

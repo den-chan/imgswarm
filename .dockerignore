@@ -1,8 +1,0 @@
-*.md
-*.sh
-.gitignore
-.git/
-docker-compose.yml
-nginx/
-haproxy/
-trash/

@@ -193,6 +193,7 @@ div#ifs-list {
 input#if-name-field {
   margin: .3rem;
   padding: calc(.3rem - 1px) calc(.3rem + 1px);
+  width: calc(40% - .6rem);
   font: 12pt serif;
   background: peachpuff;
   border: 0;
@@ -212,6 +213,9 @@ div#ifs-list-container {
 div#ifs-list-container{
   overflow-y: auto
 }
+.active div#ifs-list-container {
+  overflow-y: hidden
+}
 label.if-label {
   display: inline-block;
   margin: .5rem .6rem -.5rem;
@@ -227,12 +231,14 @@ label.if-label:hover {
 }
 div#if-actions {
   position: absolute;
-  width: 100%;
+  right: 0;
+  width: calc(60% - .6rem);
   text-align: right;
   pointer-events: none
 }
 div#if-actions > * {
-  pointer-events: all
+  pointer-events: all;
+  font-family: iconfont
 }
 
 .button {
@@ -243,7 +249,7 @@ div#if-actions > * {
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
-  
+
   text-align: center;
   height: 1.5rem;
   line-height: 1.5rem;
@@ -252,6 +258,27 @@ div#if-actions > * {
   cursor: pointer;
   padding: 0 .3rem;
   margin: .3rem .3rem .3rem -.3rem
+}
+div#delete-imagefeed:before {
+  content: '\e905'
+}
+div#return-imagefeed:before {
+  content: '\e902'
+}
+div#upload-imagefeed.img-view:before {
+  content: '\e903'
+}
+div#upload-imagefeed:not(.img-view):before {
+  content: '\e904'
+}
+div#new-imagefeed:before {
+  content: '\e907'
+}
+div#orphan-imagefeed:before {
+  content: '\e908'
+}
+div#publish-imagefeed:before {
+  content: '\e906'
 }
 .button:hover {
   background: #ccc
@@ -328,13 +355,12 @@ div#if-directory > label:focus {
 #if-directory > .label-spacer.drag {
   background: tomato
 }
-div#if-image-upload > :nth-last-child(n+2) {
+div#if-image-fileselect {
   text-align: center;
-  flex: 0 3rem;
-  line-height: 3rem;
-  width: 60%
+  line-height: 2rem;
+  padding: 1rem 3rem
 }
-div#if-image-upload > :nth-last-child(n+2):hover {
+div#if-image-fileselect:hover {
   background: aqua
 }
 div#if-image-upload label {

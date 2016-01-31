@@ -3,7 +3,7 @@ var client = new WebTorrent();
 client.seed(user.currentImageFeed.images[0].file, {
   name: user.currentImageFeed.name + ": " + user.currentImageFeed.images[0].name,
   createdBy: "Imgswarm v0.0",
-  announceList:[["wss://imgswarm.herokuapp.com"]]
+  announceList:[["wss://imgswarm.tk:5001"]]
 }, function (err, tor) {});
 client.torrents[0]
 */
@@ -45,7 +45,7 @@ var uiEvents = {
     keydown: function (e) {
       e.stopPropagation();
       var w = e.which;
-      if (!imageFocus || w !== 37 && w !== 39) return false;
+      if ("imageFocus" in window && !imageFocus || w !== 37 && w !== 39) return false;
       window.getSelection().removeAllRanges();
       var cur = $("#if-directory > label").indexOf($("#if-directory > label[contenteditable]")),
           tot = $("#if-directory > label").length,
@@ -71,6 +71,9 @@ var uiEvents = {
   },
   "#new-imagefeed": {
     click: function () {
+      $("#upload-imagefeed").classList.toggle("hide");
+      $("#upload-imagefeed").classList.remove("img-view");
+      $("#upload-imagefeed").setAttribute("title", "View feed images");
       $("#if-name-field").value = "";
       var label = $("#stamps > .if-label").cloneNode(true),
           ifLabels = (function (l) {
@@ -107,24 +110,40 @@ var uiEvents = {
   "#return-imagefeed": {
     click: function () {
       toggleImageFeed();
-      $("#upload-imagefeed").classList.toggle("hide")
-      $("#if-image-upload > *").forEach(function (el) { el.classList.toggle("hide") });
+      $("#upload-imagefeed").classList.toggle("hide");
       ($("#if-directory > *, #if-image-preview > img") || []).map(function (el) { el.parentNode.removeChild(el) });
       $("#ifs-list-container > [data-if-current]").removeAttribute("data-if-current");
       delete user.currentImageFeed;
       delete user.currentId
     }
   },
+  "#publish-imagefeed": {
+    click: function () {
+      var client = new WebTorrent();
+      client.seed(user.currentImageFeed.images[0].file, {
+        name: user.currentImageFeed.name + ": " + user.currentImageFeed.images[0].name,
+        createdBy: "Imgswarm v0.0",
+        announceList:[["wss://imgswarm.tk:5001"]]
+      }, function (err, tor) {});
+      console.log( client.torrents[0] )
+    }
+  },
   "#upload-imagefeed": {
     click: function () {
+      this.classList.toggle("img-view");
+      this.classList.contains("img-view") ?
+        this.setAttribute("title", "Locally upload images") :
+        this.setAttribute("title", "View feed images");
       $("#if-image-upload > *").forEach(function (el) { el.classList.toggle("hide") });
     }
   },
   "#if-file-input": {
     change: function (e) {
       e.stopPropagation();
-      e.preventDefault();
-      user.currentImageFeed.capture(e.target.files).then(handleImages)
+      //e.preventDefault();
+      user.currentImageFeed.capture(e.target.files).then(handleImages);
+      $("#upload-imagefeed").classList.toggle("img-view");
+      $("#if-image-upload > *").forEach(function (el) { el.classList.toggle("hide") })
     }
   },
   "#if-image-upload": {
@@ -141,6 +160,8 @@ var uiEvents = {
       switch (e.type) {
         case "drop":
           user.currentImageFeed.capture(e.dataTransfer.files).then(handleImages);
+          $("#upload-imagefeed").classList.toggle("img-view");
+          $("#if-image-upload > *").forEach(function (el) { el.classList.toggle("hide") })
         case "dragleave":
           $("#if-image-upload").classList.remove("drag");
           break
@@ -255,6 +276,7 @@ var uiEvents = {
   }
 }, ifLabelEvents = {
   click: function () {
+    $("#upload-imagefeed").classList.toggle("hide");
     ($("#if-directory > *, #if-image-preview > img") || []).map(function (el) { el.parentNode.removeChild(el) });
     this.setAttribute("data-if-current", "");
     user.currentImageFeed = user.imageFeeds[user.currentId = this.dataset.imagefeedId];
@@ -268,6 +290,7 @@ var uiEvents = {
 function toggleImageFeed () {
   $("#new-imagefeed").classList.toggle("hide");
   $("#delete-imagefeed").classList.toggle("hide");
+  $("#publish-imagefeed").classList.toggle("hide");
   $("#return-imagefeed").classList.toggle("hide");
   $("#if-name-field").classList.toggle("hide");
   $("#ifs-manage").classList.toggle("active");
@@ -292,7 +315,5 @@ function handleImages (images) {
     $("#if-image-preview").appendChild(img)
   }
   addEvents(imageUIEvents(ix));
-  $("#upload-imagefeed").classList.toggle("hide")
-  $("#if-image-upload > *").forEach(function (el) { el.classList.toggle("hide") });
   !j || $("#if-directory > label:nth-of-type(" + (ix+1) + ")").dispatchEvent(new Event("click"))
 }

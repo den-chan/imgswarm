@@ -20,22 +20,21 @@
                 <input type="text" id="if-name-field" class="hide" placeholder="Choose a title...">
               </div>
               <div id="if-actions">
-                <div id="delete-imagefeed" class="button hide">Delete</div>
-                <div id="return-imagefeed" class="button hide">Return</div>
-                <div id="new-imagefeed" class="button">New</div>
-                <div id="orphan-imagefeed" class="button hide">Orphan</div>
-                <div id="upload-imagefeed" class="button hide">Upload</div>
+                <div id="new-imagefeed" class="button" title="New image feed"></div>
+                <div id="delete-imagefeed" class="button hide" title="Delete unpublished image feed"></div>
+                <div id="publish-imagefeed" class="button hide" title="Publish images to tracker"></div>
+                <div id="orphan-imagefeed" class="button hide" title="Complete as album"></div>
+                <div id="upload-imagefeed" class="button hide" title="Locally upload images"></div>
+                <div id="return-imagefeed" class="button hide" title="Return to my image feeds"></div>
               </div>
             </div>
           </div>
           <div id="if-directory"></div>
           <div id="if-image-upload">
-            <div id="if-image-dropzone">
-              <label>Drag &amp; drop</label>
-            </div>
             <div id="if-image-fileselect">
               <input type="file" id="if-file-input" name="if-file-input" multiple />
               <label for="if-file-input">Choose images</label>
+              <div>or drag &amp; drop</div>
             </div>
             <div id="if-image-preview" class="hide">
               <div id="if-fullscreen-toggle"></div>
